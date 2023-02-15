@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole",
+                "cloudformation:DescribeStackEvents",
+                "cloudformation:GetTemplate",
+                "cloudformation:DeleteStack",
+                "cloudformation:CreateChangeSet",
+                "cloudformation:DescribeChangeSet",
+                "cloudformation:ExecuteChangeSet",
+                "cloudformation:DeleteChangeSet",
+                "cloudformation:DescribeStacks"
+            ],
+            "Resource": [
+                "arn:aws:cloudformation:us-east-1:193333210305:stack/caden-test-cdk-v2/*",
+                "arn:aws:cloudformation:us-east-1:193333210305:stack/CDKToolkit/*",
+                "arn:aws:iam::193333210305:role/Git_Role_Test",
+                "arn:aws:iam::*:role/*"
+            ]
+        }
+    ]
+}

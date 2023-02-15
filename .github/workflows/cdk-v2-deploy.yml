@@ -1,0 +1,92 @@
+# Sample workflow for launching and taking down a stack and capturing the required permissions
+name: AWS permissions finder
+on:
+  push
+env:
+  AWS_REGION : "us-east-1"
+# permission can be added at job level or workflow level    
+permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+jobs:
+  CDK_deploy_destory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+      - name: configure aws credentials for Git_Role_Test
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: arn:aws:iam::193333210305:role/Git_Role_Test
+          role-session-name: samplerolesession
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Python Install
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
+      - name: Install AWS CDK v1
+        run: npm install -g aws-cdk@1.x
+      - name: Check CDK Version
+        run: cdk --version
+      - name: Install requirments
+        run: pip install -r requirements.txt
+      - name: Record start time
+        id: start_time
+        run: |
+          start=$(date +%s)
+          echo "start_-5=$((start - 1200))" >> $GITHUB_ENV
+      - name: Deploy CDK app
+        run: cdk deploy
+      - name: Destory CDK app
+        run: cdk destroy --force
+      - name: Start policy generation
+        run: |
+          end=$(date +%s)
+          output=$(aws accessanalyzer start-policy-generation \
+          --policy-generation-details '{
+            "principalArn": "arn:aws:iam::193333210305:role/Git_Role_Test"
+          }' \
+          --cloud-trail-details '{
+            "accessRole": "arn:aws:iam::193333210305:role/Git_Role_Test",
+            "endTime": '$end',
+            "startTime": '${{ env.start_-5 }}',
+            "trails": [
+              {
+                "allRegions": true,
+                "cloudTrailArn": "arn:aws:cloudtrail:us-east-1:193333210305:trail/CDK-OIDC-GitHub-Trail",
+                "regions": []
+              }
+            ]
+          }')
+
+          jobId=$(echo "$output" | jq -r .jobId)
+          echo "policy_id='$jobId'" >> $GITHUB_ENV
+      - name: Check job status
+        id: check_status
+        run: |
+          while true; do
+            result=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}')
+            status=$(echo "$result" | jq -r '.jobDetails.status')
+            if [ "$status" = "SUCCEEDED" ]; then
+              echo "status=$status" >> "GITHUB_ENV"
+              break
+            fi
+            echo "Waiting for the policy generation to complete, current status: $status"
+            sleep 30
+          done
+      - name: Retrieve policy
+        run: |
+          aws accessanalyzer get-generated-policy \
+            --job-id '${{ env.policy_id }}' \
+            # jq 'generatedPolicyResult.generatedPolicies[0].policy | fromjson' \
+            # jq .
+            # policy=$(echo "$output" | jq -r '.generatedPolicies.policy')
+            # echo "$policy" | jq
+
+
+
+
+
+
+
+  

@@ -1,0 +1,48 @@
+# Sample workflow to access AWS resources when workflow is tied to branch
+name: AWS example workflow
+on:
+  push
+env:
+  AWS_REGION : "us-east-1"
+# permission can be added at job level or workflow level    
+permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+jobs:
+  CDK_make_bucket:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+      - name: configure aws credentials for Git_Role_Test
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: arn:aws:iam::193333210305:role/Git_Role_Test
+          #role-session-name: samplerolesession
+          aws-region: ${{ env.AWS_REGION }}
+      - name: configure aws credentials for OIDC-test-deploy
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-region: ${{ env.AWS_REGION }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          role-duration-seconds: 3000
+          role-skip-session-tagging: true
+          #role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/OIDC-test-deploy"
+          role-to-assume: arn:aws:iam::611670965994:role/OIDC-test-deploy
+      - name: Python Install
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
+      - name: Install AWS CDK v2
+        run: npm install -g aws-cdk@2.x
+      - name: Check CDK Version
+        run: cdk --version
+      - name: Install requirments
+        run: pip install -r requirements.txt
+      - name: Deploy CDK app
+        run: cdk deploy
+      - name: Destory CDK app
+        run: cdk destroy --force
+  
