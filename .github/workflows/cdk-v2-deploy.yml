@@ -40,7 +40,7 @@ jobs:
       - name: Destory CDK app
         run: cdk destroy --force
       - name: Wait
-        run: sleep 120
+        run: sleep 121.875
       - name: Start policy generation
         run: |
           end=$(date +%s)
