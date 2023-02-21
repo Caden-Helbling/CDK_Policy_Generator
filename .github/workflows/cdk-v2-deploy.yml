@@ -34,11 +34,13 @@ jobs:
         id: start_time
         run: |
           start=$(date +%s)
-          echo "start_-5=$((start - 1200))" >> $GITHUB_ENV
+          echo "start=$((start))" >> $GITHUB_ENV
       - name: Deploy CDK app
         run: cdk deploy
       - name: Destory CDK app
         run: cdk destroy --force
+      -name: Wait
+        run: sleep 300
       - name: Start policy generation
         run: |
           end=$(date +%s)
@@ -49,7 +51,7 @@ jobs:
           --cloud-trail-details '{
             "accessRole": "arn:aws:iam::193333210305:role/Git_Role_Test",
             "endTime": '$end',
-            "startTime": '${{ env.start_-5 }}',
+            "startTime": '${{ env.start }}',
             "trails": [
               {
                 "allRegions": true,
