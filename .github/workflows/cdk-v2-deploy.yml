@@ -6,10 +6,10 @@ env:
   AWS_REGION : "us-east-1"
 # permission can be added at job level or workflow level    
 permissions:
-      id-token: write   # This is required for requesting the JWT
-      contents: read    # This is required for actions/checkout
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
 jobs:
-  CDK_deploy_destory:
+  CDK_deploy_destroy:
     runs-on: ubuntu-latest
     steps:
       - name: Git clone the repository
@@ -39,7 +39,7 @@ jobs:
         run: cdk deploy
       - name: Destory CDK app
         run: cdk destroy --force
-      -name: Wait
+      - name: Wait
         run: sleep 300
       - name: Start policy generation
         run: |
@@ -67,7 +67,7 @@ jobs:
         id: check_status
         run: |
           while true; do
-            result=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}')
+            result=$(aws accessanalyzer get-generated-policy --job-id "${{ env.policy_id }}")
             status=$(echo "$result" | jq -r '.jobDetails.status')
             if [ "$status" = "SUCCEEDED" ]; then
               echo "status=$status" >> "GITHUB_ENV"
