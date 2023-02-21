@@ -39,8 +39,8 @@ jobs:
         run: cdk deploy
       - name: Destory CDK app
         run: cdk destroy --force
-      # - name: Wait
-      #   run: sleep 300
+      - name: Wait
+        run: sleep 150
       - name: Start policy generation
         run: |
           end=$(date +%s)
@@ -77,12 +77,10 @@ jobs:
             sleep 30
           done
       - name: Retrieve policy
-        # run: |
-        #   aws accessanalyzer get-generated-policy \
-        #     --job-id '${{ env.policy_id }}' \
         run: |
-          policy=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}' | jq '.generatedPolicyResult.generatedPolicies[0].policy' | @json')
-          echo "$policy"
+          aws accessanalyzer get-generated-policy \
+            --job-id '${{ env.policy_id }}' \
+
 
 
 
