@@ -77,13 +77,12 @@ jobs:
             sleep 30
           done
       - name: Retrieve policy
+        # run: |
+        #   aws accessanalyzer get-generated-policy \
+        #     --job-id '${{ env.policy_id }}' \
         run: |
-          aws accessanalyzer get-generated-policy \
-            --job-id '${{ env.policy_id }}' \
-            # jq 'generatedPolicyResult.generatedPolicies[0].policy | fromjson' \
-            # jq .
-            # policy=$(echo "$output" | jq -r '.generatedPolicies.policy')
-            # echo "$policy" | jq
+          policy=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}' | jq '.generatedPolicyResult.generatedPolicies[0].policy')
+          echo "::set-output name=policy::$policy"
 
 
 
