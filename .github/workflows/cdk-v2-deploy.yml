@@ -81,8 +81,7 @@ jobs:
         #   aws accessanalyzer get-generated-policy \
         #     --job-id '${{ env.policy_id }}' \
         run: |
-          policy=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}' | jq '.generatedPolicyResult.generatedPolicies[0].policy')
-          echo "policy=$policy" >> $GITHUB_ENV
+          policy=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}' | jq '.generatedPolicyResult.generatedPolicies[0].policy' | jq -c .)
           echo "$policy"
 
 
