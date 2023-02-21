@@ -67,7 +67,7 @@ jobs:
         id: check_status
         run: |
           while true; do
-            result=$(aws accessanalyzer get-generated-policy --job-id "${{ env.policy_id }}")
+            result=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}')
             status=$(echo "$result" | jq -r '.jobDetails.status')
             if [ "$status" = "SUCCEEDED" ]; then
               echo "status=$status" >> "GITHUB_ENV"
