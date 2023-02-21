@@ -31,10 +31,9 @@ jobs:
       - name: Install requirments
         run: pip install -r requirements.txt
       - name: Record start time
-        id: start_time
         run: |
           start=$(date +%s)
-          echo "start=$((start))" >> $GITHUB_ENV
+          echo "start=$start" >> $GITHUB_ENV
       - name: Deploy CDK app
         run: cdk deploy
       - name: Destory CDK app
@@ -64,7 +63,6 @@ jobs:
           jobId=$(echo "$output" | jq -r .jobId)
           echo "policy_id='$jobId'" >> $GITHUB_ENV
       - name: Check job status
-        id: check_status
         run: |
           while true; do
             result=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}')
@@ -78,9 +76,42 @@ jobs:
           done
       - name: Retrieve policy
         run: |
-          aws accessanalyzer get-generated-policy \
-            --job-id '${{ env.policy_id }}' \
+          policy=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}' | jq '.generatedPolicyResult.generatedPolicies[0].policy' | jq -c .)
+          echo "$policy"
+      - name: Determine if policy has been properly generated
+        run: |
+          tries=0
+          while [[ -z "$policy" ]]; do
+            policy=$(aws accessanalyzer get-generated-policy --job-id '${{ env.policy_id }}' | jq '.generatedPolicyResult.generatedPolicies[0].policy')
+            tries=$((tries+1))
+            if [[ "$tries" -gt 5 ]]; then
+              echo "Policy not generated after 5 attempts"
+              exit 1
+            fi
+            echo "Policy is empty, restarting policy generation"
+            end=$(date +%s)
+            output=$(aws accessanalyzer start-policy-generation \
+            --policy-generation-details '{
+              "principalArn": "arn:aws:iam::193333210305:role/Git_Role_Test"
+            }' \
+            --cloud-trail-details '{
+              "accessRole": "arn:aws:iam::193333210305:role/Git_Role_Test",
+              "endTime": '$end',
+              "startTime": '${{ env.start }}',
+              "trails": [
+                {
+                  "allRegions": true,
+                  "cloudTrailArn": "arn:aws:cloudtrail:us-east-1:193333210305:trail/CDK-OIDC-GitHub-Trail",
+                  "regions": []
+                }
+              ]
+            }')
 
+            jobId=$(echo "$output" | jq -r .jobId)
+            echo "policy_id='$jobId'" >> $GITHUB_ENV
+          done
+          echo "Policy generated"
+          echo "$policy"
 
 
 
